@@ -16,7 +16,9 @@ namespace TheCadien\Bundle\SuluImportExportBundle\Command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
 use TheCadien\Bundle\SuluImportExportBundle\Service\ImportInterface;
 
 class ImportCommand extends Command
@@ -53,6 +55,7 @@ class ImportCommand extends Command
     {
         $this
             ->setName('sulu:import')
+            ->addOption('skip-db', 'd', InputOption::VALUE_OPTIONAL, 'Skips database export', false)
             ->setDescription('Imports contents exported with the sulu:export command from the remote host.')
             ->addOption(
                 'add-assets',
@@ -64,18 +67,37 @@ class ImportCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $skipDb = $input->getOption('skip-db');
         $this->input = $input;
         $this->output = $output;
         $skipAssets = $this->input->getOption('add-assets');
         $this->progressBar = new ProgressBar($this->output, $skipAssets ? 4 : 6);
         $this->progressBar->setFormat(' %current%/%max% [%bar%] %percent:3s%% <info>%message%</info>');
 
+        $helper = $this->getHelper('question');
+
+        $question = new ConfirmationQuestion('<question>Continue with this options?(y/N)</question> ', false);
+
+        $output->writeln([
+            '<info>Content export</info>',
+            '<info>==============</info>',
+            '<info>Options:</info>',
+            'Skip DB: '.$skipDb,
+        ]);
+        if (!$helper->ask($input, $output, $question)) {
+            $output->writeln('<error>Abort!</error>');
+
+            return 0;
+        }
+
         $this->progressBar->setMessage('Importing PHPCR repository...');
         $this->importService->importPHPCR();
         $this->progressBar->advance();
 
-        $this->progressBar->setMessage('Importing database...');
-        $this->importService->importDatabase();
+        if (!$skipDb) {
+            $this->progressBar->setMessage('Importing database...');
+            $this->importService->importDatabase();
+        }
         $this->progressBar->advance();
 
         if ($skipAssets) {
@@ -86,7 +108,7 @@ class ImportCommand extends Command
 
         $this->progressBar->finish();
         $this->output->writeln(
-            \PHP_EOL . "<info>Successfully imported contents. You're good to go!</info>"
+            \PHP_EOL."<info>Successfully imported contents. You're good to go!</info>"
         );
 
         return 0;
