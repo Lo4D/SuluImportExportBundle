@@ -1,13 +1,16 @@
 {
-  "name": "thecadien/sulu-import-export-bundle",
+  "name": "lo4d/sulu-import-export-bundle",
   "type": "sulu-bundle",
   "description": "Import/Export Bundle for Sulu 2 CMS",
   "keywords": ["sulu","suluCms","import","export"],
-  "homepage": "https://github.com/TheCadien/SuluImportExportBundle",
+  "homepage": "https://github.com/Lo4D/SuluImportExportBundle",
   "license": "MIT",
   "authors": [
     {
       "name": "Oliver Kossin"
+    },
+    {
+      "name": "Lo4D",
     }
   ],
   "require": {
